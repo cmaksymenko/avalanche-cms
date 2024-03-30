@@ -27,8 +27,10 @@ echo "Using $PYTHON_CMD and $PIP_CMD"
 
 # Install 'av' in editable mode
 echo "Installing 'av' in editable mode for direct code updates..."
-if $PIP_CMD install --editable . ; then
-    echo "Avalanche CLI installed, use 'av --help'"
+if $PIP_CMD install --editable . ; then    
+    echo "Avalanche CLI installed, as follows:"
+    $PIP_CMD show -f av
+    echo "Use 'av --help' for further usage."
 else
     echo "Installation of Avalanche CLI failed"
     exit 1
