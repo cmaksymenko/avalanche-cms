@@ -1,6 +1,7 @@
 import click
 from av.auth import login
-from av.open import keycloak_group, pgadmin_group
+from av.keycloak import keycloak_group
+from av.pgadmin import pgadmin_group
 
 @click.group()
 def cli():
