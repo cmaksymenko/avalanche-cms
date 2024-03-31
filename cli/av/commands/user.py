@@ -6,8 +6,8 @@ from ..core.token import Token, TokenType, require_token
 def group():
     pass
 
-@require_token
 @group.command('show')
+@require_token
 def show_user():
     
     try:
