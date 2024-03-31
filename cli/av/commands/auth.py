@@ -14,7 +14,7 @@ import click
 import requests
 import socket
 from datetime import datetime, timedelta
-from .token import Token, TokenType, require_token
+from ..core.token import Token, TokenType, require_token
 
 def display_time_until_expiration(exp_timestamp):
     

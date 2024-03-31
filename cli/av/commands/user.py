@@ -1,6 +1,6 @@
 import click
-from .token import Token, TokenType, require_token
 import json
+from ..core.token import Token, TokenType, require_token
  
 @click.group(name='user')
 def group():
