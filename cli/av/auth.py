@@ -13,11 +13,21 @@ from uuid import uuid4
 import click
 import requests
 import socket
+from datetime import datetime, timedelta
+from .token import Token, TokenType, require_token
 
-@click.group()
-def auth_commands():
-    """Authentication commands."""
-    pass
+def display_time_until_expiration(exp_timestamp):
+    
+    current_timestamp = datetime.now().timestamp()
+
+    remaining_time_seconds = exp_timestamp - current_timestamp
+    
+    if remaining_time_seconds <= 0:
+        return "The token has already expired."
+    
+    remaining_minutes, remaining_seconds = divmod(remaining_time_seconds, 60)
+    formatted_remaining_time = f"{int(remaining_minutes)}min {int(remaining_seconds)}s"
+    return formatted_remaining_time
 
 def base64_url_encode(data):
     return base64.urlsafe_b64encode(data).rstrip(b'=')
@@ -187,23 +197,18 @@ def login():
             click.echo(f"  {key}: {value}")
         click.echo(f"Response Body:\n{response.text}")    
         
-        response_data = response.json()
-               
-        identity_token = decode_jwt_payload(response_data.get("id_token"))
-        access_token = decode_jwt_payload(response_data.get("access_token"))
-        refresh_token = decode_jwt_payload(response_data.get("refresh_token"))
+        id_token, access_token, refresh_token = Token.from_response(response, save=True)
         
-        click.echo(f"Identity Token: {json.dumps(identity_token, indent=2)}")
-        click.echo(f"Access Token: {json.dumps(access_token, indent=2)}")
-        click.echo(f"Refresh Token: {json.dumps(refresh_token, indent=2)}")
-        
-        user_email = identity_token["email"]
-        user_id = identity_token["sub"]
+        click.echo(f"Identity Token valid for {id_token.sec_until_expired()}s: {json.dumps(id_token.decoded_jwt, indent=2)}")
+        click.echo(f"Access Token valid for {access_token.sec_until_expired()}s: {json.dumps(access_token.decoded_jwt, indent=2)}")
+        click.echo(f"Refresh Token valid for {refresh_token.sec_until_expired()}s: {json.dumps(refresh_token.decoded_jwt, indent=2)}")
         
         cli_response = {
             "user": {
-                "id": user_id,
-                "email": user_email
+                "id": id_token.decoded_jwt.get("sub"),
+                "username": id_token.decoded_jwt.get("preferred_username"),
+                "email": id_token.decoded_jwt.get("email"),
+                "name": id_token.decoded_jwt.get("name")
             },
             "message": "Login successful."
         }        
@@ -217,5 +222,10 @@ def login():
         }
         
     click.echo(json.dumps(cli_response, indent=2))
-        
+
+#@require_token
+@click.command()
+def logout():
+    #Token.clear()#
+    click.echo("logout mock")
     pass

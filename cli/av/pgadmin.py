@@ -1,11 +1,11 @@
 import click
 import webbrowser
-   
+  
 @click.group(name='pgadmin')
-def pgadmin_group():
+def group():
     pass
 
-@pgadmin_group.command('open')
-def open_pgadmin():
+@group.command('open')
+def pgadmin_open():
     url = 'http://host.docker.internal:5050/'
     webbrowser.open(url)

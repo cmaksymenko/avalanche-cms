@@ -1,11 +1,11 @@
 import click
 import webbrowser
-   
+  
 @click.group(name='keycloak')
-def keycloak_group():
+def group():
     pass
 
-@keycloak_group.command('open')
-def open_keycloak():
+@group.command('open')
+def keycloak_open():
     url = 'http://host.docker.internal:8080/'
     webbrowser.open(url)

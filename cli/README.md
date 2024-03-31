@@ -41,7 +41,9 @@ The CLI initiates an authorization code flow by opening your default browser to 
 {
   "user": {
     "id": "e8da69ad-d824-4bc5-8ee1-51443489ec5a",
-    "email": "user@example.com"
+    "username": "username",
+    "email": "user@example.com",
+    "name": "User Name"    
   },
   "message": "Login successful."
 }
@@ -71,7 +73,9 @@ av user show
 {
   "user": {
     "id": "e8da69ad-d824-4bc5-8ee1-51443489ec5a",
+    "username": "username",
     "email": "user@example.com",
+    "name": "User Name"    
   },
   "message": "User is logged in.",
 }

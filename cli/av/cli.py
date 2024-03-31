@@ -1,16 +1,20 @@
 import click
-from av.auth import login
-from av.keycloak import keycloak_group
-from av.pgadmin import pgadmin_group
+
+import av.auth
+import av.user
+import av.keycloak
+import av.pgadmin
 
 @click.group()
 def cli():
     """Avalanche CLI"""
     pass
 
-cli.add_command(login)
-cli.add_command(keycloak_group)
-cli.add_command(pgadmin_group)
+cli.add_command(av.auth.login)
+cli.add_command(av.auth.logout)
+cli.add_command(av.user.group)
+cli.add_command(av.keycloak.group)
+cli.add_command(av.pgadmin.group)
 
 if __name__ == '__main__':
     cli()
