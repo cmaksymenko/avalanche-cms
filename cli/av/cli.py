@@ -1,7 +1,7 @@
 import click
 
-from av.commands.auth import login as login_command
-from av.commands.auth import logout as logout_command
+from av.commands.login import login as login_command
+from av.commands.logout import logout as logout_command
 from av.commands.user import group as user_commands
 from av.commands.keycloak import group as keycloak_commands
 from av.commands.pgadmin import group as pgadmin_commands

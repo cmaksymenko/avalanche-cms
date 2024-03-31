@@ -12,9 +12,8 @@ from urllib.parse import urlparse, parse_qs
 from uuid import uuid4
 import click
 import requests
-import socket
-from datetime import datetime, timedelta
-from ..core.token import Token, TokenType, require_token
+from datetime import datetime
+from ..core.token import Token
 
 def display_time_until_expiration(exp_timestamp):
     
@@ -222,10 +221,3 @@ def login():
         }
         
     click.echo(json.dumps(cli_response, indent=2))
-
-#@require_token
-@click.command()
-def logout():
-    #Token.clear()#
-    click.echo("logout mock")
-    pass
