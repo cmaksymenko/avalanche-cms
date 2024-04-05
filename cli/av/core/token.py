@@ -43,6 +43,11 @@ class Token:
     @staticmethod
     def get_expiration(decoded_jwt):
         return datetime.datetime.fromtimestamp(decoded_jwt.get("exp"), tz=timezone.utc)
+    
+    def get_expiration_secs(self):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        delta = self.expiration - now
+        return delta.total_seconds()
            
     @classmethod
     def from_jwt(cls, encoded_jwt, token_type: TokenType, save=False):
@@ -103,8 +108,8 @@ def require_token(func):
         try:
 
             refresh_token = Token.from_type(TokenType.REFRESH)
-
-            if not refresh_token or refresh_token.is_expired():
+           
+            if refresh_token is None or refresh_token.is_expired() == True:
                 raise ValueError("Refresh token is missing or expired.")
 
         except Exception as e:

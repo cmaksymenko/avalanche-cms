@@ -60,3 +60,6 @@ replay_pid*
 
 # Docker Volumes
 /docker/volumes/
+
+# Config files
+**/features.yaml

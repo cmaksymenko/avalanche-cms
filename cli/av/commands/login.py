@@ -28,17 +28,6 @@ def display_time_until_expiration(exp_timestamp):
     formatted_remaining_time = f"{int(remaining_minutes)}min {int(remaining_seconds)}s"
     return formatted_remaining_time
 
-def base64_url_encode(data):
-    return base64.urlsafe_b64encode(data).rstrip(b'=')
-
-def generate_code_verifier():
-    token = secrets.token_urlsafe(32)
-    return token.encode('utf-8')
-
-def generate_code_challenge(verifier):
-    sha256 = hashlib.sha256(verifier).digest()
-    return base64_url_encode(sha256)
-
 def decode_jwt_payload(token):
     # Split the token into its parts
     parts = token.split('.')
@@ -56,6 +45,134 @@ def decode_jwt_payload(token):
     
     return payload_dict
 
+def generate_code_verifier_and_challenge():
+    
+    code_verifier = secrets.token_urlsafe(32).encode('utf-8')
+    code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier).digest()).rstrip(b'=')
+    
+    return code_verifier.decode('utf-8'), code_challenge.decode('utf-8')
+
+def start_auth_server(server_port, code_queue, code_ready_event):
+    
+    class RedirectHandler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            if urlparse(self.path).path.endswith('/callback'):
+                query_components = parse_qs(urlparse(self.path).query)
+                code = query_components.get("code", None)
+                if code:
+                    code_queue.put(code[0])
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/html')
+                    self.end_headers()
+                    self.wfile.write(b"Authentication successful. You can close this window.")
+                    code_ready_event.set()
+                    threading.Thread(target=httpd.shutdown).start()
+                    
+    httpd = socketserver.TCPServer(("", server_port), RedirectHandler)
+    server_thread = threading.Thread(target=httpd.serve_forever)
+    server_thread.daemon = True
+    server_thread.start()
+    
+    return httpd, server_thread
+
+def wait_for_code(code_ready_event, code_queue, timeout=300):
+    
+    start_time = time.time()
+    
+    while not code_ready_event.is_set() and (time.time() - start_time) < timeout:
+        try:
+            code_ready_event.wait(timeout=1)
+        except KeyboardInterrupt:
+            break
+        
+    if code_ready_event.is_set():
+        return code_queue.get()
+    
+    return None
+
+@click.command()
+def login():
+    
+    client_id = 'avalanchecli'
+    realm = 'avalanchecms'
+    keycloak_url = 'http://localhost:8080'
+    server_port = 49200
+    redirect_uri = f"http://localhost:{server_port}/avalanchecli/oidc/pkce/callback"
+
+    code_verifier, code_challenge = generate_code_verifier_and_challenge()
+    
+    params = {
+        'client_id': client_id,
+        'response_type': 'code',
+        'scope': 'openid profile email',
+        'redirect_uri': redirect_uri,
+        'code_challenge': code_challenge,
+        'code_challenge_method': 'S256',
+    }
+    
+    authorization_endpoint = f'{keycloak_url}/realms/{realm}/protocol/openid-connect/auth'
+    token_endpoint = f'{keycloak_url}/realms/{realm}/protocol/openid-connect/token'
+    authorization_url = requests.Request('GET', authorization_endpoint, params=params).prepare().url
+
+    code_queue = queue.Queue()
+    code_ready_event = threading.Event()
+    httpd, server_thread = start_auth_server(server_port, code_queue, code_ready_event)
+
+    webbrowser.open_new(authorization_url)
+
+    authorization_code = wait_for_code(code_ready_event, code_queue)
+
+    if authorization_code:
+        
+        data = {
+            'grant_type': 'authorization_code',
+            'client_id': client_id,
+            'redirect_uri': redirect_uri,
+            'code': authorization_code,
+            'code_verifier': code_verifier
+        }
+        response = requests.post(token_endpoint, data=data)
+        
+        click.echo(f"URL: {response.url}")
+        click.echo(f"Status Code: {response.status_code}")
+        click.echo("Response Headers:")
+        for key, value in response.headers.items():
+            click.echo(f"  {key}: {value}")
+        click.echo("Request Headers:")
+        for key, value in response.request.headers.items():
+            click.echo(f"  {key}: {value}")
+        click.echo(f"Response Body:\n{response.text}")    
+        
+        id_token, access_token, refresh_token = Token.from_response(response, save=True)
+        
+        click.echo(f"Identity Token valid for {id_token.sec_until_expired()}s: {json.dumps(id_token.decoded_jwt, indent=2)}")
+        click.echo(f"Access Token valid for {access_token.sec_until_expired()}s: {json.dumps(access_token.decoded_jwt, indent=2)}")
+        click.echo(f"Refresh Token valid for {refresh_token.sec_until_expired()}s: {json.dumps(refresh_token.decoded_jwt, indent=2)}")
+        
+        user_info = {"id": access_token.decoded_jwt.get("sub"),
+                     "username": access_token.decoded_jwt.get("preferred_username"),
+                     "email": access_token.decoded_jwt.get("email"),
+                     "name": access_token.decoded_jwt.get("name")}
+        
+        cli_response = {
+            "user": user_info,
+            "message": "Login successful."
+        }
+        
+    else:
+        
+        cli_response = {
+            "error": {
+                "message": "Login failed."
+            }
+        }
+        
+    httpd.shutdown()
+    server_thread.join()
+        
+    click.echo(json.dumps(cli_response, indent=2))
+
+'''        
 @click.command()
 def login():
     
@@ -221,3 +338,4 @@ def login():
         }
         
     click.echo(json.dumps(cli_response, indent=2))
+'''

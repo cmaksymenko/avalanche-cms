@@ -3,3 +3,6 @@ requests==2.31.0
 keyring==25.0.0
 pytest==8.1.1
 pyjwt==2.8.0
+humanize==4.9.0
+pyyaml==6.0.1
+appdirs==1.4.4
