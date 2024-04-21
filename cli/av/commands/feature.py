@@ -3,6 +3,7 @@ from pathlib import Path
 import click
 from appdirs import user_config_dir
 import yaml
+import json
 
 class Feature(Enum):
     SHOW_TOKEN = "show-token"
@@ -77,21 +78,44 @@ def enable_feature(feature, yes=False):
                 return
 
     feature_set[feature.value] = True
-    click.echo(f"{feature.value} enabled.")
+    
+    cli_response = {"message": f"{feature.value} enabled.", "feature": feature.value, "enabled": feature_set[feature.value]}
+    click.echo(json.dumps(cli_response, indent=2))
 
 @group.command('disable')
 @click.argument('feature', callback=lambda ctx, param, value: validate_feature(value))
 def disable_feature(feature):
     feature_set[feature.value] = False
-    click.echo(f"{feature.value} disabled.")
+    cli_response = {"message": f"{feature.value} disabled.", "feature": feature.value, "enabled": feature_set[feature.value]}
+    click.echo(json.dumps(cli_response, indent=2))
 
 def validate_feature(value):
+    if value is None:
+        return None
     try:
         if value in Feature._value2member_map_:
             return Feature(value)
         else:
             raise ValueError
     except ValueError:
-        raise click.BadParameter(f"'{value} unsupported.")
-
+        raise click.BadParameter(f"'{value}' is unsupported.")
+      
+@group.command('reset')
+def reset_features():
+    for feature in Feature:
+        feature_set[feature.value] = False
+    cli_response = {"message": "All features disabled."}
+    click.echo(json.dumps(cli_response, indent=2))
+    
+@group.command('show')
+@click.argument('feature', required=False, callback=lambda ctx, param, value: validate_feature(value))
+def show_features(feature=None):
+    cli_response = {}
+    if feature:
+        cli_response[feature.value] = feature_set.is_set(feature.value)
+    else:
+        for feature in Feature:
+            cli_response[feature.value] = feature_set.is_set(feature)
+    click.echo(json.dumps(cli_response, indent=2))
+    
 feature_set = FeatureSet()
