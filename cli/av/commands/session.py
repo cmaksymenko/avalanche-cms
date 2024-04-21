@@ -1,6 +1,6 @@
 import click
 import json
-from ..core.token import Token, TokenType, require_token
+from ..core.token import Token, TokenType
 import humanize
 import datetime
 import math
@@ -21,13 +21,17 @@ def adaptive_naturaldelta(seconds):
         return humanize.naturaldelta(datetime.timedelta(seconds=math.floor(seconds)))
    
 @group.command('show')
-@require_token
-def session_show():
+@Token.require(token_type=TokenType.REFRESH, suppress_refresh=True)
+def session_show(token: Token = None):
+    
     try:
-
+    
+        if token is None:
+            raise ValueError("Token error. Log in and retry.")
+        
         tokens = {
             "access": Token.from_type(TokenType.ACCESS),
-            "refresh": Token.from_type(TokenType.REFRESH)
+            "refresh": token
         }
         
         token_details = {}
@@ -60,9 +64,8 @@ def session_show():
             "tokens": token_details
         }
         
-        cli_response = {"session": session_details, "message": "Session active."}
+        cli_response = {"session": session_details, "message": "Session active."} 
+        click.echo(json.dumps(cli_response, indent=2))
         
     except Exception as e:
-        cli_response = {"error": {"message": "Session inactive. Start new with 'av login'."}}
-        
-    click.echo(json.dumps(cli_response, indent=2))
+        Token.handle_error(e, "Session inactive. Log in and retry.")

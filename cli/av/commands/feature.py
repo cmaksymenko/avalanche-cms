@@ -6,12 +6,14 @@ import yaml
 
 class Feature(Enum):
     SHOW_TOKEN = "show-token"
+    VERBOSE_ERRORS = "verbose-errors"
 
 class FeatureProperty(Enum):
     EXPOSURE = "exposure"
 
 FEATURE_CONFIG = {
-    Feature.SHOW_TOKEN: {FeatureProperty.EXPOSURE: True}
+    Feature.SHOW_TOKEN: {FeatureProperty.EXPOSURE: True},
+    Feature.VERBOSE_ERRORS: {FeatureProperty.EXPOSURE: False}
 }
 
 class FeatureSet(dict):
@@ -31,7 +33,7 @@ class FeatureSet(dict):
         except FileNotFoundError:
             self.save_data_to_yaml()
         except Exception as e:
-            click.echo(f"Can't load config file.")
+            click.echo(f"Config load failed.")
             self.backup_and_reset()
 
     def save_data_to_yaml(self):
@@ -42,9 +44,9 @@ class FeatureSet(dict):
         backup_file = self.config_file.with_suffix('.yaml.bkp')
         if self.config_file.exists():
             self.config_file.rename(backup_file)
-            click.echo(f"Backing up config to {backup_file}")
+            click.echo(f"Backing up to {backup_file}.")
         self.clear()
-        click.echo("Resetted config.")
+        click.echo("Config reset.")
         self.save_data_to_yaml()
 
     def __setitem__(self, key, value):
@@ -70,18 +72,18 @@ def group():
 def enable_feature(feature, yes=False):
     if FEATURE_CONFIG.get(feature, {}).get(FeatureProperty.EXPOSURE, False):
         if not yes:
-            click.echo(f"Warning: Enabling feature {feature.value} may expose sensitive information.")
-            if not click.confirm("Do you wish to continue?"):
+            click.echo(f"Warning: {feature.value} may expose sensitive info.")
+            if not click.confirm("Continue?"):
                 return
 
     feature_set[feature.value] = True
-    click.echo(f"Feature enabled: {feature.value}")
+    click.echo(f"{feature.value} enabled.")
 
 @group.command('disable')
 @click.argument('feature', callback=lambda ctx, param, value: validate_feature(value))
 def disable_feature(feature):
     feature_set[feature.value] = False
-    click.echo(f"Feature disabled: {feature.value}")
+    click.echo(f"{feature.value} disabled.")
 
 def validate_feature(value):
     try:
@@ -90,6 +92,6 @@ def validate_feature(value):
         else:
             raise ValueError
     except ValueError:
-        raise click.BadParameter(f"'{value}' not supported.")
+        raise click.BadParameter(f"'{value} unsupported.")
 
 feature_set = FeatureSet()

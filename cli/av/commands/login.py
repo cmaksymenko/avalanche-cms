@@ -33,7 +33,7 @@ def start_auth_server(server_port, code_queue, code_ready_event):
                     self.send_response(200)
                     self.send_header('Content-type', 'text/html')
                     self.end_headers()
-                    self.wfile.write(b"Login successful. Please close this window.")
+                    self.wfile.write(b"Login successful. Close this window.")
                     code_ready_event.set()
                     threading.Thread(target=httpd.shutdown).start()
                     
@@ -92,8 +92,8 @@ def login(quiet=False):
     httpd, server_thread = start_auth_server(server_port, code_queue, code_ready_event)
     
     if not quiet:
-        click.echo("Opening authorization URL in browser...")
-        click.echo(f"If it doesn't open, visit: {authorization_url}")    
+        click.echo("Opening authorization URL...")
+        click.echo(f"If not opening, visit: {authorization_url}")    
         
     webbrowser.open_new(authorization_url)
 
