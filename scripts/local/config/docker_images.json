@@ -4,6 +4,7 @@
     "quay.io/keycloak/keycloak:23.0.7",
     "postgres:16-alpine",
     "dpage/pgadmin4:8",
+    "daprio/daprd:1.13.2",
     "redis:7.2.4-alpine"
   ]
 }
