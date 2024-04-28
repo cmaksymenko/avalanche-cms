@@ -1,8 +1,9 @@
 {
   "images": [
     "registry.access.redhat.com/ubi9:9.3",
-    "quay.io/keycloak/keycloak:23.0",
+    "quay.io/keycloak/keycloak:23.0.7",
     "postgres:16-alpine",
-    "dpage/pgadmin4:8"
+    "dpage/pgadmin4:8",
+    "redis:7.2.4-alpine"
   ]
 }
