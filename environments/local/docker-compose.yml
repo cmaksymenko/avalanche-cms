@@ -111,6 +111,27 @@ services:
     entrypoint: /usr/local/bin/avalanchecms/entrypoint.sh
     command: ["start-dev", "--import-realm"] # Development mode, never use for production
 
+  # Dapr
+  dapr:
+    image: "daprio/daprd:1.13.2"
+    container_name: dapr
+    restart: always
+    ports:
+      - "3500:3500" # HTTP
+      - "50001:50001" # gRPC
+    networks:
+      - local
+    command: [
+      "./daprd",
+      "-app-id", "dapr",
+      "-app-port", "8888",
+      "--resources-path", "/components"
+    ]
+    volumes:
+        - "./config/dapr:/components"
+    depends_on:
+      - redis
+
   # Redis for Dapr
   redis:
     image: redis:7.2.4-alpine
