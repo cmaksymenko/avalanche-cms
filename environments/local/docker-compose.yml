@@ -79,7 +79,7 @@ services:
     build:
       context: ./docker/keycloak
       args:
-        KEYCLOAK_VERSION: "23.0"
+        KEYCLOAK_VERSION: "23.0.7"
     restart: always
     depends_on:
       - postgres
@@ -110,7 +110,20 @@ services:
       - ./../../.secrets/pgadmin-keycloak-client-secret.env:/run/secrets/avalanchecms/pgadmin-keycloak-client-secret.env:ro
     entrypoint: /usr/local/bin/avalanchecms/entrypoint.sh
     command: ["start-dev", "--import-realm"] # Development mode, never use for production
+
+  # Redis for Dapr
+  redis:
+    image: redis:7.2.4-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - local
+    volumes:
+      - redis-data:/data
   
 # Storage Volumes
 volumes:
   postgres-data:
+  redis-data:
