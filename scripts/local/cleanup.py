@@ -51,7 +51,7 @@ def remove_volumes(volumes):
         print(f"Removing volume {volume}...")
         
         # remove volume
-        subprocess.run(["docker", "volume", "rm", volume], check=True)
+        subprocess.run(["docker", "volume", "rm", "-f", volume], check=True)
         
         print(f"Removed volume {volume}")
 
