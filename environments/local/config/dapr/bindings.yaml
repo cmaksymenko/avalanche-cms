@@ -1,0 +1,13 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: bindings
+  namespace: default
+spec:
+  type: bindings.redis
+  version: v1
+  metadata:
+  - name: redisHost
+    value: host.docker.internal:6379
+  - name: redisPassword
+    value: ""
